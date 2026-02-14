@@ -1,22 +1,36 @@
-from node:alpine
-RUN npm install -g pnpm 
-workdir /user/src/app
-ARG  DATABASE_URL
-COPY  ./packages ./packages
-COPY  ./package.json ./package.json
-COPY  ./turbo.json ./turbo.json
+FROM node:alpine
 
+RUN npm install -g pnpm
+
+WORKDIR /usr/src/app
+
+ARG DATABASE_URL
+
+# 1. Copy workspace config files first (needed for pnpm install)
+COPY package.json ./
+COPY pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml ./
+COPY turbo.json ./
+
+# 2. Copy ALL workspace package.json files so pnpm can resolve dependencies
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY packages/database/package.json ./packages/database/package.json
+COPY packages/config-typescript/ ./packages/config-typescript/
+COPY packages/config-eslint/package.json ./packages/config-eslint/package.json
+
+# 3. Install dependencies
 RUN pnpm install
 
-COPY  ./apps/backend ./apps/backend
+# 4. Copy the actual source code
+COPY packages/database/ ./packages/database/
+COPY apps/backend/ ./apps/backend/
 
-
-
+# 5. Generate Prisma client
 RUN pnpm run db:generate
+
+# 6. Build the backend
 RUN DATABASE_URL=${DATABASE_URL} pnpm run build
 
 EXPOSE 3001
 
 CMD ["pnpm", "run", "start:backend"]
-
-
