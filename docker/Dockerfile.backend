@@ -5,6 +5,8 @@ RUN npm install -g pnpm
 WORKDIR /usr/src/app
 
 ARG DATABASE_URL
+# Make DATABASE_URL available as an env var in ALL RUN commands
+ENV DATABASE_URL=$DATABASE_URL
 
 # 1. Copy workspace config files first (needed for pnpm install)
 COPY package.json ./
@@ -29,7 +31,11 @@ COPY apps/backend/ ./apps/backend/
 RUN pnpm run db:generate
 
 # 6. Build only the backend (and its dependencies)
-RUN DATABASE_URL=${DATABASE_URL} pnpm run build
+RUN pnpm turbo run build --filter=backend
+
+# 7. Remove build-time DATABASE_URL so it's not baked into the image
+# The real DATABASE_URL should be provided at runtime via docker run -e or docker-compose
+ENV DATABASE_URL=""
 
 EXPOSE 3001
 
