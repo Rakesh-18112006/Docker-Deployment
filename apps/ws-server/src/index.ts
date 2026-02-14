@@ -8,8 +8,7 @@ wss.on('connection', (ws) => {
 
   ws.on('message', async (message) => {
     console.log(`Received message: ${message}`);
-
-   
+      
    await prisma.user.create({
         data : {
             username: message.toString(),
