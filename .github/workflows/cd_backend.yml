@@ -35,9 +35,9 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           port: 22
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
-            docker stop backend || true
-            docker rm backend || true
-            docker run -d --name backend -p 3001:3001 \
-                -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+            sudo docker stop backend || true
+            sudo docker rm backend || true
+            sudo docker run -d --name backend -p 3001:3001 \
+                -e "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
                 ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
