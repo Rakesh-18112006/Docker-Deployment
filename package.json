@@ -12,8 +12,11 @@
     "db:seed": "turbo run db:seed",
     "dev": "turbo run dev",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "generate": "turbo run generate",
-    "lint": "turbo run lint"
+    "db:generate": "cd packages/database && npx prisma generate && cd ../..",
+    "lint": "turbo run lint",
+    "start:web" : " cd apps/web && pnpm start",
+    "start:backend": "cd apps/backend && pnpm start",
+    "start:ws": "cd apps/ws-server && pnpm start"
   },
   "devDependencies": {
     "prettier": "^3.2.5",

@@ -1,0 +1,22 @@
+from node:alpine
+RUN npm install -g pnpm 
+workdir /user/src/app
+ARG  DATABASE_URL
+COPY  ./packages ./packages
+COPY  ./package.json ./package.json
+COPY  ./turbo.json ./turbo.json
+
+RUN pnpm install
+
+COPY  ./apps/backend ./apps/backend
+
+
+
+RUN pnpm run db:generate
+RUN DATABASE_URL=${DATABASE_URL} pnpm run build
+
+EXPOSE 3001
+
+CMD ["pnpm", "run", "start:backend"]
+
+
