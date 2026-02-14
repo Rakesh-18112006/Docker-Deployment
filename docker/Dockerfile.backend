@@ -29,7 +29,7 @@ COPY apps/backend/ ./apps/backend/
 RUN pnpm run db:generate
 
 # 6. Build only the backend (and its dependencies)
-RUN DATABASE_URL=${DATABASE_URL} pnpm turbo run build --filter=backend
+RUN DATABASE_URL=${DATABASE_URL} pnpm run build
 
 EXPOSE 3001
 
