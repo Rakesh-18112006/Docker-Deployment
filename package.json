@@ -14,9 +14,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "db:generate": "cd packages/database && npx prisma generate && cd ../..",
     "lint": "turbo run lint",
-    "start:web" : " cd apps/web && pnpm start",
-    "start:backend": "cd apps/backend && pnpm start",
-    "start:ws": "cd apps/ws-server && pnpm start"
+    "start:web" : " cd apps/web && pnpm run dev",
+    "start:backend": "cd apps/backend && pnpm run dev",
+    "start:ws": "cd apps/ws-server && pnpm run dev"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
