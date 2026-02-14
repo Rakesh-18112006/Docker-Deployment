@@ -15,7 +15,7 @@ COPY pnpm-workspace.yaml ./
 COPY turbo.json ./
 
 # 2. Copy ALL workspace package.json files so pnpm can resolve dependencies
-COPY apps/web/package.json ./apps/webq/package.json
+COPY apps/web/package.json ./apps/web/package.json
 COPY packages/database/package.json ./packages/database/package.json
 COPY packages/config-typescript/ ./packages/config-typescript/
 COPY packages/config-eslint/package.json ./packages/config-eslint/package.json
