@@ -27,3 +27,17 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
           build-args: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
+      - name: Deploy to the VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ubuntu
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: 22
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+            docker stop backend || true
+            docker rm backend || true
+            docker run -d --name backend -p 3001:3001 \
+                -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+                ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
