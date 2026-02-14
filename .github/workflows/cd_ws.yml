@@ -35,7 +35,6 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           port: 22
           script: |
-          script: |
             # Restart docker to fix potential daemon/containerd state corruption
             sudo systemctl restart docker
             # Wait for docker to be ready
