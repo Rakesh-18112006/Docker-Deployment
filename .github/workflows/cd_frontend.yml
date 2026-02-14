@@ -34,23 +34,21 @@ jobs:
           username: ubuntu
           key: ${{ secrets.VM_SSH_KEY }}
           port: 22
+          command_timeout: 10m
           script: |
-            # Exit immediately if a command exits with a non-zero status
-            set -e
-
-            # Free up space by removing unused images/containers AND volumes
-            sudo docker system prune -a --volumes -f
+            # Clean up only dangling images (safe, won't remove images used by other containers)
+            sudo docker image prune -f || true
 
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
-            
+
             # Stop specific container if exists
             sudo docker stop frontend || true
             sudo docker rm frontend || true
-            
+
             # Stop ANY container occupying port 3000 to prevent conflict
             sudo docker ps -q --filter "publish=3000" | xargs -r sudo docker stop
             sudo docker ps -aq --filter "publish=3000" | xargs -r sudo docker rm
-            
+
             sudo docker run -d --name frontend -p 3000:3000 \
                 -e "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
                 ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}

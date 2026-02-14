@@ -34,25 +34,21 @@ jobs:
           username: ubuntu
           key: ${{ secrets.VM_SSH_KEY }}
           port: 22
+          command_timeout: 10m
           script: |
-            # Exit immediately if a command exits with a non-zero status
-            set -e
-
-            # Free up space by removing unused images/containers AND volumes
-            # We skip restarting docker as it can hang the SSH connection
-            sudo docker system prune -a --volumes -f
+            # Clean up only dangling images (safe, won't remove images used by other containers)
+            sudo docker image prune -f || true
 
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/ws:${{ github.sha }}
 
-            
             # Stop specific container if exists
             sudo docker stop ws || true
             sudo docker rm ws || true
-            
+
             # Stop ANY container occupying port 8080 to prevent conflict
             sudo docker ps -q --filter "publish=8080" | xargs -r sudo docker stop
             sudo docker ps -aq --filter "publish=8080" | xargs -r sudo docker rm
-            
+
             sudo docker run -d --name ws -p 8080:8080 \
                 -e "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
                 ${{ secrets.DOCKER_USERNAME }}/ws:${{ github.sha }}
