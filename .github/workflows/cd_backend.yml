@@ -36,8 +36,13 @@ jobs:
           port: 22
           script: |
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+            # Stop specific container if exists
             sudo docker stop backend || true
             sudo docker rm backend || true
+            # Stop ANY container occupying port 3001 to prevent conflict
+            sudo docker ps -q --filter "publish=3001" | xargs -r sudo docker stop
+            sudo docker ps -aq --filter "publish=3001" | xargs -r sudo docker rm
+            
             sudo docker run -d --name backend -p 3001:3001 \
                 -e "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
                 ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
