@@ -35,8 +35,11 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           port: 22
           script: |
-            # Free up space by removing unused images/containers
-            sudo docker system prune -af
+            # Exit immediately if a command exits with a non-zero status
+            set -e
+
+            # Free up space by removing unused images/containers AND volumes
+            sudo docker system prune -a --volumes -f
 
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
             

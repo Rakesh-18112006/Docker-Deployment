@@ -35,15 +35,15 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           port: 22
           script: |
-            # Restart docker to fix potential daemon/containerd state corruption
-            sudo systemctl restart docker
-            # Wait for docker to be ready
-            while ! sudo docker info >/dev/null 2>&1; do echo "Waiting for Docker to start..."; sleep 1; done
+            # Exit immediately if a command exits with a non-zero status
+            set -e
 
             # Free up space by removing unused images/containers AND volumes
+            # We skip restarting docker as it can hang the SSH connection
             sudo docker system prune -a --volumes -f
 
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/ws:${{ github.sha }}
+
             
             # Stop specific container if exists
             sudo docker stop ws || true
