@@ -43,13 +43,6 @@ jobs:
             echo "=== [DEBUG] Disk space ==="
             df -h /var/lib/docker
 
-            echo "=== [DEBUG] Cleaning up corrupted state from previous failed deploys ==="
-            sudo docker system prune -af || true
-
-            echo "=== [DEBUG] Pulling image ==="
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
-            echo "=== [DEBUG] Pull exit code: $? ==="
-
             echo "=== [DEBUG] Stopping old container ==="
             sudo docker stop backend || true
             sudo docker rm backend || true
@@ -57,6 +50,13 @@ jobs:
             # Stop ANY container occupying port 3001 to prevent conflict
             sudo docker ps -q --filter "publish=3001" | xargs -r sudo docker stop
             sudo docker ps -aq --filter "publish=3001" | xargs -r sudo docker rm
+
+            echo "=== [DEBUG] Cleaning up corrupted state from previous failed deploys ==="
+            sudo docker system prune -af || true
+
+            echo "=== [DEBUG] Pulling image ==="
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
+            echo "=== [DEBUG] Pull exit code: $? ==="
 
             echo "=== [DEBUG] Starting container ==="
             sudo docker run -d --name backend -p 3001:3001 \

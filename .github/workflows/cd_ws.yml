@@ -43,13 +43,6 @@ jobs:
             echo "=== [DEBUG] Disk space ==="
             df -h /var/lib/docker
 
-            echo "=== [DEBUG] Cleaning up corrupted state from previous failed deploys ==="
-            sudo docker system prune -af || true
-
-            echo "=== [DEBUG] Pulling image ==="
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/ws:${{ github.sha }}
-            echo "=== [DEBUG] Pull exit code: $? ==="
-
             echo "=== [DEBUG] Stopping old container ==="
             sudo docker stop ws || true
             sudo docker rm ws || true
@@ -57,6 +50,13 @@ jobs:
             # Stop ANY container occupying port 8080 to prevent conflict
             sudo docker ps -q --filter "publish=8080" | xargs -r sudo docker stop
             sudo docker ps -aq --filter "publish=8080" | xargs -r sudo docker rm
+
+            echo "=== [DEBUG] Cleaning up corrupted state from previous failed deploys ==="
+            sudo docker system prune -af || true
+
+            echo "=== [DEBUG] Pulling image ==="
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/ws:${{ github.sha }}
+            echo "=== [DEBUG] Pull exit code: $? ==="
 
             echo "=== [DEBUG] Starting container ==="
             sudo docker run -d --name ws -p 8080:8080 \

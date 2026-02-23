@@ -43,13 +43,6 @@ jobs:
             echo "=== [DEBUG] Disk space ==="
             df -h /var/lib/docker
 
-            echo "=== [DEBUG] Cleaning up corrupted state from previous failed deploys ==="
-            sudo docker system prune -af || true
-
-            echo "=== [DEBUG] Pulling image ==="
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
-            echo "=== [DEBUG] Pull exit code: $? ==="
-
             echo "=== [DEBUG] Stopping old container ==="
             sudo docker stop frontend || true
             sudo docker rm frontend || true
@@ -57,6 +50,13 @@ jobs:
             # Stop ANY container occupying port 3000 to prevent conflict
             sudo docker ps -q --filter "publish=3000" | xargs -r sudo docker stop
             sudo docker ps -aq --filter "publish=3000" | xargs -r sudo docker rm
+
+            echo "=== [DEBUG] Cleaning up corrupted state from previous failed deploys ==="
+            sudo docker system prune -af || true
+
+            echo "=== [DEBUG] Pulling image ==="
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
+            echo "=== [DEBUG] Pull exit code: $? ==="
 
             echo "=== [DEBUG] Starting container ==="
             sudo docker run -d --name frontend -p 3000:3000 \
