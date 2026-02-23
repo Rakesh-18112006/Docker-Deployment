@@ -1,12 +1,13 @@
-# ---- Stage 1: Builder ----
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
-RUN npm install -g pnpm
+# Install pnpm and break any hardlinks it creates (same layer = no hardlinks in tar)
+RUN npm install -g pnpm && \
+    find /usr/local/lib/node_modules -type f -links +1 | while read f; do cp "$f" "$f.tmp" && mv "$f.tmp" "$f"; done 2>/dev/null; true
 
 WORKDIR /usr/src/app
 
-# Configure pnpm to avoid hardlinks (prevents overlayfs extraction failures on VM)
-RUN echo "node-linker=hoisted" > .npmrc
+# Force pnpm to copy files instead of hardlinking
+RUN printf "node-linker=hoisted\npackage-import-method=copy\n" > .npmrc
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
@@ -20,29 +21,19 @@ COPY packages/database/package.json ./packages/database/package.json
 COPY packages/config-typescript/ ./packages/config-typescript/
 COPY packages/config-eslint/package.json ./packages/config-eslint/package.json
 
-# 3. Install dependencies
-RUN pnpm install
+# 3. Install dependencies and break any remaining hardlinks in same layer
+RUN pnpm install && \
+    find /usr/src/app -type f -links +1 | while read f; do cp "$f" "$f.tmp" && mv "$f.tmp" "$f"; done 2>/dev/null; true
 
 # 4. Copy source code
 COPY packages/database/ ./packages/database/
 COPY apps/web/ ./apps/web/
 
-# 5. Generate Prisma client
-RUN pnpm run db:generate
+# 5. Generate Prisma, build, and break any new hardlinks in same layer
+RUN pnpm run db:generate && \
+    pnpm turbo run build --filter=web && \
+    find /usr/src/app -type f -links +1 | while read f; do cp "$f" "$f.tmp" && mv "$f.tmp" "$f"; done 2>/dev/null; true
 
-# 6. Build
-RUN pnpm turbo run build --filter=web
-
-
-# ---- Stage 2: Runtime ----
-FROM node:20-alpine
-
-WORKDIR /usr/src/app
-
-# Copy built app from builder (COPY --from dereferences all hardlinks)
-COPY --from=builder /usr/src/app ./
-
-# Remove build-time DATABASE_URL
 ENV DATABASE_URL=""
 
 EXPOSE 3000
