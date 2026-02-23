@@ -1,23 +1,20 @@
-FROM node:alpine
+# ---- Stage 1: Builder ----
+FROM node:20-alpine AS builder
 
 RUN npm install -g pnpm
 
 WORKDIR /usr/src/app
 
-# Force pnpm to copy files instead of hardlinking (prevents overlayfs extraction failures)
+# Configure pnpm to avoid hardlinks (prevents overlayfs extraction failures on VM)
 RUN echo "node-linker=hoisted" > .npmrc
 
 ARG DATABASE_URL
-# Make DATABASE_URL available as an env var in ALL RUN commands
 ENV DATABASE_URL=$DATABASE_URL
 
-# 1. Copy workspace config files first (needed for pnpm install)
-COPY package.json ./
-COPY pnpm-lock.yaml ./
-COPY pnpm-workspace.yaml ./
-COPY turbo.json ./
+# 1. Copy workspace config files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# 2. Copy ALL workspace package.json files so pnpm can resolve dependencies
+# 2. Copy package.json files for dependency resolution
 COPY apps/web/package.json ./apps/web/package.json
 COPY packages/database/package.json ./packages/database/package.json
 COPY packages/config-typescript/ ./packages/config-typescript/
@@ -26,20 +23,28 @@ COPY packages/config-eslint/package.json ./packages/config-eslint/package.json
 # 3. Install dependencies
 RUN pnpm install
 
-# 4. Copy the actual source code
+# 4. Copy source code
 COPY packages/database/ ./packages/database/
 COPY apps/web/ ./apps/web/
 
 # 5. Generate Prisma client
 RUN pnpm run db:generate
 
-# 6. Build only the web app (and its dependencies)
+# 6. Build
 RUN pnpm turbo run build --filter=web
 
-# 7. Remove build-time DATABASE_URL so it's not baked into the image
-# The real DATABASE_URL should be provided at runtime via docker run -e or docker-compose
+
+# ---- Stage 2: Runtime ----
+FROM node:20-alpine
+
+WORKDIR /usr/src/app
+
+# Copy built app from builder (COPY --from dereferences all hardlinks)
+COPY --from=builder /usr/src/app ./
+
+# Remove build-time DATABASE_URL
 ENV DATABASE_URL=""
 
 EXPOSE 3000
 
-CMD ["pnpm", "run", "start:web"]
+CMD ["node", "node_modules/.bin/next", "start"]
