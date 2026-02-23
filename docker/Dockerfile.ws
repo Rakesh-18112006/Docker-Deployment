@@ -4,6 +4,9 @@ RUN npm install -g pnpm
 
 WORKDIR /usr/src/app
 
+# Force pnpm to copy files instead of hardlinking (prevents overlayfs extraction failures)
+RUN echo "node-linker=hoisted" > .npmrc
+
 ARG DATABASE_URL
 # Make DATABASE_URL available as an env var in ALL RUN commands
 ENV DATABASE_URL=$DATABASE_URL

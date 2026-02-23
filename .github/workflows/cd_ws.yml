@@ -36,8 +36,8 @@ jobs:
           port: 22
           command_timeout: 10m
           script: |
-            # Clean up only dangling images (safe, won't remove images used by other containers)
-            sudo docker image prune -f || true
+            # Clean up dangling images and build cache (clears any corrupted containerd state)
+            sudo docker system prune -f || true
 
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/ws:${{ github.sha }}
 
